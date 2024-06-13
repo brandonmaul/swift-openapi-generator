@@ -244,7 +244,7 @@ extension FileTranslator {
     func translateMultipartRequirementsExtraArguments(_ requirements: MultipartRequirements)
         -> [FunctionArgumentDescription]
     {
-        func sortedStringSetLiteral(_ set: Set<String>) -> Expression {
+        func sortedStringSetLiteral(_ set: Set<String>) -> SwiftExpression {
             .literal(.array(set.sorted().map { .literal($0) }))
         }
         let requirementsArgs: [FunctionArgumentDescription] = [
@@ -317,7 +317,7 @@ extension FileTranslator {
         contentType: ContentType,
         partTypeName: TypeName,
         schema: JSONSchema,
-        payloadExpr: Expression,
+        payloadExpr: SwiftExpression,
         headerDecls: [Declaration],
         headersVarArgs: [FunctionArgumentDescription]
     ) throws -> SwitchCaseDescription? {
@@ -336,22 +336,22 @@ extension FileTranslator {
             contentTypeUsage = partTypeName.asUsage
         }
 
-        let verifyContentTypeExpr: Expression = .try(
+        let verifyContentTypeExpr: SwiftExpression = .try(
             .identifierPattern("converter").dot("verifyContentTypeIfPresent")
                 .call([
                     .init(label: "in", expression: .identifierPattern("headerFields")),
                     .init(label: "matches", expression: .literal(contentTypeHeaderValue)),
                 ])
         )
-        let transformExpr: Expression = .closureInvocation(body: [.expression(.identifierPattern("$0"))])
-        let converterExpr: Expression = .identifierPattern("converter")
+        let transformExpr: SwiftExpression = .closureInvocation(body: [.expression(.identifierPattern("$0"))])
+        let converterExpr: SwiftExpression = .identifierPattern("converter")
             .dot("\(getBodyMethodPrefix)As\(codingStrategy.runtimeName)")
             .call([
                 .init(label: nil, expression: .identifierType(contentTypeUsage.withOptional(false)).dot("self")),
                 .init(label: "from", expression: .identifierPattern("part").dot("body")),
                 .init(label: "transforming", expression: transformExpr),
             ])
-        let bodyExpr: Expression
+        let bodyExpr: SwiftExpression
         switch codingStrategy {
         case .json, .uri, .urlEncodedForm:
             // Buffering.
@@ -368,7 +368,7 @@ extension FileTranslator {
         } else {
             extraNameArgs = []
         }
-        let returnExpr: Expression = .return(
+        let returnExpr: SwiftExpression = .return(
             .dot(caseName)
                 .call([
                     .init(
@@ -431,7 +431,7 @@ extension FileTranslator {
                     headerDecls = []
                     headersVarArgs = []
                 }
-                let payloadExpr: Expression = .dot("init")
+                let payloadExpr: SwiftExpression = .dot("init")
                     .call(headersVarArgs + [.init(label: "body", expression: .identifierPattern("body"))])
                 return try translateMultipartDecodingClosureTypedPart(
                     caseName: identifier,
@@ -450,7 +450,7 @@ extension FileTranslator {
                 let contentType = part.partInfo.contentType
                 let partTypeName = part.typeName
                 let schema = part.schema
-                let payloadExpr: Expression = .identifierPattern("body")
+                let payloadExpr: SwiftExpression = .identifierPattern("body")
                 return try translateMultipartDecodingClosureTypedPart(
                     caseName: Constants.AdditionalProperties.variableName,
                     caseKind: .default,
@@ -552,11 +552,11 @@ extension FileTranslator {
     /// - Returns: The switch case description.
     func translateMultipartEncodingClosureTypedPart(
         caseName: String,
-        nameExpr: Expression,
-        bodyExpr: Expression,
+        nameExpr: SwiftExpression,
+        bodyExpr: SwiftExpression,
         setBodyMethodPrefix: String,
         contentType: ContentType,
-        headerExprs: [Expression]
+        headerExprs: [SwiftExpression]
     ) -> SwitchCaseDescription {
         let contentTypeHeaderValue = contentType.headerValueForSending
         let headersDecl: Declaration = .variable(
@@ -582,7 +582,7 @@ extension FileTranslator {
                     ])
             )
         )
-        let returnExpr: Expression = .return(
+        let returnExpr: SwiftExpression = .return(
             .dot("init")
                 .call([
                     .init(label: "name", expression: nameExpr),
@@ -620,7 +620,7 @@ extension FileTranslator {
                     jsonComponent: "headers"
                 )
                 let headers = try typedResponseHeaders(from: part.headers, inParent: headersTypeName)
-                let headerExprs: [Expression] = headers.map { header in translateMultipartOutgoingHeader(header) }
+                let headerExprs: [SwiftExpression] = headers.map { header in translateMultipartOutgoingHeader(header) }
                 return translateMultipartEncodingClosureTypedPart(
                     caseName: identifier,
                     nameExpr: .literal(originalName),

@@ -31,7 +31,7 @@ extension TypesFileTranslator {
         let parameters: [ParameterDescription] = safeVariables.map { (originalKey, swiftSafeKey, value) in
             .init(label: swiftSafeKey, type: .init(TypeName.string), defaultValue: .literal(value.default))
         }
-        let variableInitializers: [Expression] = safeVariables.map { (originalKey, swiftSafeKey, value) in
+        let variableInitializers: [SwiftExpression] = safeVariables.map { (originalKey, swiftSafeKey, value) in
             let allowedValuesArg: FunctionArgumentDescription?
             if let allowedValues = value.enum {
                 allowedValuesArg = .init(

@@ -84,7 +84,7 @@ extension FileTranslator {
             .map { variableName in
                 .expression(
                     .assignment(
-                        Expression.identifierPattern("self").dot(variableName).equals(.identifierPattern(variableName))
+                        SwiftExpression.identifierPattern("self").dot(variableName).equals(.identifierPattern(variableName))
                     )
                 )
             }

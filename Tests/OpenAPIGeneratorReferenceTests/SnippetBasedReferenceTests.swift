@@ -5255,7 +5255,7 @@ private func XCTAssertSwiftEquivalent(
 }
 
 private func XCTAssertSwiftEquivalent(
-    _ expression: Expression,
+    _ expression: SwiftExpression,
     _ expectedSwift: String,
     file: StaticString = #filePath,
     line: UInt = #line

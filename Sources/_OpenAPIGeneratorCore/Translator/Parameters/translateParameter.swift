@@ -84,7 +84,7 @@ extension ClientFileTranslator {
     /// - Parameter description: The OpenAPI operation.
     /// - Returns: A tuple containing a templated string with path parameters and an expression representing an array of those parameters.
     /// - Throws: An error if there is an issue translating path parameters for the client.
-    func translatePathParameterInClient(description: OperationDescription) throws -> (String, Expression) {
+    func translatePathParameterInClient(description: OperationDescription) throws -> (String, SwiftExpression) {
         try description.templatedPathForClient
     }
 
@@ -100,9 +100,9 @@ extension ClientFileTranslator {
         _ parameter: TypedParameter,
         requestVariableName: String,
         inputVariableName: String
-    ) throws -> Expression? {
+    ) throws -> SwiftExpression? {
         let methodPrefix: String
-        let containerExpr: Expression
+        let containerExpr: SwiftExpression
         let supportsStyleAndExplode: Bool
         switch parameter.location {
         case .header:
@@ -166,7 +166,7 @@ extension ServerFileTranslator {
             return "get\(optionality)\(parameterLocationName)As\(typedParameter.codingStrategy.runtimeName)"
         }
 
-        let convertExpr: Expression
+        let convertExpr: SwiftExpression
         switch parameter.location {
         case .path:
             convertExpr = .try(

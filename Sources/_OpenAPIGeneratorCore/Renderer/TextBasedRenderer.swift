@@ -421,7 +421,7 @@ struct TextBasedRenderer: RendererProtocol {
     }
 
     /// Renders the specified expression.
-    func renderExpression(_ expression: Expression) {
+    func renderExpression(_ expression: SwiftExpression) {
         switch expression {
         case .literal(let literalDescription): renderLiteral(literalDescription)
         case .identifier(let identifierDescription): writer.writeLine(renderedIdentifier(identifierDescription))
@@ -893,7 +893,7 @@ extension TextBasedRenderer {
     /// Returns the provided expression rendered as a string.
     /// - Parameter expression: The expression.
     /// - Returns: The string representation of the expression.
-    static func renderedExpressionAsString(_ expression: Expression) -> String {
+    static func renderedExpressionAsString(_ expression: SwiftExpression) -> String {
         let renderer = TextBasedRenderer.default
         renderer.renderExpression(expression)
         return renderer.renderedContents()

@@ -19,7 +19,7 @@ extension FileTranslator {
     /// a header fields container.
     /// - Parameter header: The header to set.
     /// - Returns: An expression.
-    func translateMultipartOutgoingHeader(_ header: TypedResponseHeader) -> Expression {
+    func translateMultipartOutgoingHeader(_ header: TypedResponseHeader) -> SwiftExpression {
         .try(
             .identifierPattern("converter").dot("setHeaderFieldAs\(header.codingStrategy.runtimeName)")
                 .call([
@@ -40,7 +40,7 @@ extension FileTranslator {
     func translateMultipartIncomingHeader(_ header: TypedResponseHeader) -> FunctionArgumentDescription {
         let methodName =
             "get\(header.isOptional ? "Optional" : "Required")HeaderFieldAs\(header.codingStrategy.runtimeName)"
-        let convertExpr: Expression = .try(
+        let convertExpr: SwiftExpression = .try(
             .identifierPattern("converter").dot(methodName)
                 .call([
                     .init(label: "in", expression: .identifierPattern("headerFields")),
@@ -163,7 +163,7 @@ extension ServerFileTranslator {
     /// - Returns: A function argument expression.
     /// - Throws: An error if there's an issue while generating the expression for setting the header field.
     func translateResponseHeaderInServer(_ header: TypedResponseHeader, responseVariableName: String) throws
-        -> Expression
+        -> SwiftExpression
     {
         .try(
             .identifierPattern("converter").dot("setHeaderFieldAs\(header.codingStrategy.runtimeName)")

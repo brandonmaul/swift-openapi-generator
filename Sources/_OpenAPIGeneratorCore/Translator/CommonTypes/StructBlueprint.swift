@@ -115,7 +115,7 @@ struct PropertyBlueprint {
         /// A custom expression.
         ///
         /// For example: `init(foo: String = "hi")`
-        case expression(Expression)
+        case expression(SwiftExpression)
     }
 
     /// A documentation comment for the property.
@@ -174,7 +174,7 @@ extension PropertyBlueprint {
 extension PropertyBlueprint.DefaultValue {
 
     /// Returns an expression for the default value.
-    var asExpression: Expression {
+    var asExpression: SwiftExpression {
         switch self {
         case .nil: return .literal(.nil)
         case .emptyInit: return .functionCall(calledExpression: .dot("init"))

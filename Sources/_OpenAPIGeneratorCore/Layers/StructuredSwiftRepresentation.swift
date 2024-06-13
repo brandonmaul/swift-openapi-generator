@@ -116,7 +116,7 @@ enum LiteralDescription: Equatable, Codable {
     /// An array literal.
     ///
     /// For example `["hello", 42]`.
-    case array([Expression])
+    case array([SwiftExpression])
 }
 
 /// A description of an identifier, such as a variable name.
@@ -143,7 +143,7 @@ struct MemberAccessDescription: Equatable, Codable {
     /// The expression of which a member `right` is accessed.
     ///
     /// For example, in `foo.bar`, `left` represents `foo`.
-    var left: Expression?
+    var left: SwiftExpression?
 
     /// The member name to access.
     ///
@@ -164,7 +164,7 @@ struct FunctionArgumentDescription: Equatable, Codable {
     /// The expression passed as the function argument value.
     ///
     /// For example, in `foo(bar: 42)`, `expression` represents `42`.
-    var expression: Expression
+    var expression: SwiftExpression
 }
 
 /// A description of a function call.
@@ -175,7 +175,7 @@ struct FunctionCallDescription: Equatable, Codable {
     /// The expression that returns the function to be called.
     ///
     /// For example, in `foo(bar: 42)`, `calledExpression` represents `foo`.
-    var calledExpression: Expression
+    var calledExpression: SwiftExpression
 
     /// The arguments to be passed to the function.
     var arguments: [FunctionArgumentDescription]
@@ -189,7 +189,7 @@ struct FunctionCallDescription: Equatable, Codable {
     ///   - arguments: Arguments to be passed to the function.
     ///   - trailingClosure: A trailing closure.
     init(
-        calledExpression: Expression,
+        calledExpression: SwiftExpression,
         arguments: [FunctionArgumentDescription] = [],
         trailingClosure: ClosureInvocationDescription? = nil
     ) {
@@ -203,7 +203,7 @@ struct FunctionCallDescription: Equatable, Codable {
     ///   - calledExpression: An expression that returns the function to be called.
     ///   - arguments: Arguments to be passed to the function.
     ///   - trailingClosure: A trailing closure.
-    init(calledExpression: Expression, arguments: [Expression], trailingClosure: ClosureInvocationDescription? = nil) {
+    init(calledExpression: SwiftExpression, arguments: [SwiftExpression], trailingClosure: ClosureInvocationDescription? = nil) {
         self.init(
             calledExpression: calledExpression,
             arguments: arguments.map { .init(label: nil, expression: $0) },
@@ -239,7 +239,7 @@ struct VariableDescription: Equatable, Codable {
     /// The name of the variable.
     ///
     /// For example, in `let foo = 42`, `left` is `foo`.
-    var left: Expression
+    var left: SwiftExpression
 
     /// The type of the variable.
     ///
@@ -249,7 +249,7 @@ struct VariableDescription: Equatable, Codable {
     /// The expression to be assigned to the variable.
     ///
     /// For example, in `let foo = 42`, `right` represents `42`.
-    var right: Expression? = nil
+    var right: SwiftExpression? = nil
 
     /// Body code for the getter.
     ///
@@ -471,7 +471,7 @@ struct ParameterDescription: Equatable, Codable {
     ///
     /// For example, in `bar baz: String = "hi"`, `defaultValue`
     /// represents `"hi"`.
-    var defaultValue: Expression? = nil
+    var defaultValue: SwiftExpression? = nil
 }
 
 /// A function kind: `func` or `init`.
@@ -516,7 +516,7 @@ struct FunctionSignatureDescription: Equatable, Codable {
     var keywords: [FunctionKeyword] = []
 
     /// The return type name of the function, such as `Int`.
-    var returnType: Expression? = nil
+    var returnType: SwiftExpression? = nil
 }
 
 /// A description of a function definition.
@@ -554,7 +554,7 @@ struct FunctionDescription: Equatable, Codable {
         kind: FunctionKind,
         parameters: [ParameterDescription] = [],
         keywords: [FunctionKeyword] = [],
-        returnType: Expression? = nil,
+        returnType: SwiftExpression? = nil,
         body: [CodeBlock]? = nil
     ) {
         self.signature = .init(
@@ -580,8 +580,8 @@ struct FunctionDescription: Equatable, Codable {
         kind: FunctionKind,
         parameters: [ParameterDescription] = [],
         keywords: [FunctionKeyword] = [],
-        returnType: Expression? = nil,
-        body: [Expression]
+        returnType: SwiftExpression? = nil,
+        body: [SwiftExpression]
     ) {
         self.init(
             accessModifier: accessModifier,
@@ -700,12 +700,12 @@ struct AssignmentDescription: Equatable, Codable {
     /// The left-hand side expression, the variable to assign to.
     ///
     /// For example, in `foo = 42`, `left` is `foo`.
-    var left: Expression
+    var left: SwiftExpression
 
     /// The right-hand side expression, the value to assign.
     ///
     /// For example, in `foo = 42`, `right` is `42`.
-    var right: Expression
+    var right: SwiftExpression
 }
 
 /// A switch case kind, either a `case` or a `default`.
@@ -714,12 +714,12 @@ enum SwitchCaseKind: Equatable, Codable {
     /// A case.
     ///
     /// For example: `case let foo(bar):`.
-    case `case`(Expression, [String])
+    case `case`(SwiftExpression, [String])
 
     /// A case with multiple comma-separated expressions.
     ///
     /// For example: `case "foo", "bar":`.
-    case multiCase([Expression])
+    case multiCase([SwiftExpression])
 
     /// A default. Spelled as `default:`.
     case `default`
@@ -748,7 +748,7 @@ struct SwitchDescription: Equatable, Codable {
     /// The expression evaluated by the switch statement.
     ///
     /// For example, in `switch foo {`, `switchedExpression` is `foo`.
-    var switchedExpression: Expression
+    var switchedExpression: SwiftExpression
 
     /// The cases defined in the switch statement.
     var cases: [SwitchCaseDescription]
@@ -764,7 +764,7 @@ struct IfBranch: Equatable, Codable {
     /// body blocks. If more than one is provided, an `else if` branch is added.
     ///
     /// For example, in `if foo { bar }`, `condition` is `foo`.
-    var condition: Expression
+    var condition: SwiftExpression
 
     /// The body executed if the `condition` evaluates to true.
     ///
@@ -853,7 +853,7 @@ struct UnaryKeywordDescription: Equatable, Codable {
     /// The expression prefixed by the keyword.
     ///
     /// For example, in `return foo`, `expression` represents `foo`.
-    var expression: Expression? = nil
+    var expression: SwiftExpression? = nil
 }
 
 /// A description of a closure invocation.
@@ -900,7 +900,7 @@ struct BinaryOperationDescription: Equatable, Codable {
     /// The left-hand side expression of the operation.
     ///
     /// For example, in `foo += 1`, `left` is `foo`.
-    var left: Expression
+    var left: SwiftExpression
 
     /// The binary operator tying the two expressions together.
     ///
@@ -910,7 +910,7 @@ struct BinaryOperationDescription: Equatable, Codable {
     /// The right-hand side expression of the operation.
     ///
     /// For example, in `foo += 1`, `right` is `1`.
-    var right: Expression
+    var right: SwiftExpression
 }
 
 /// A description of an inout expression, which provides a read-write
@@ -922,7 +922,7 @@ struct InOutDescription: Equatable, Codable {
     /// The referenced expression.
     ///
     /// For example, in `&foo`, `referencedExpr` is `foo`.
-    var referencedExpr: Expression
+    var referencedExpr: SwiftExpression
 }
 
 /// A description of an optional chaining expression.
@@ -933,7 +933,7 @@ struct OptionalChainingDescription: Equatable, Codable {
     /// The referenced expression.
     ///
     /// For example, in `foo?`, `referencedExpr` is `foo`.
-    var referencedExpr: Expression
+    var referencedExpr: SwiftExpression
 }
 
 /// A description of a tuple.
@@ -944,11 +944,11 @@ struct TupleDescription: Equatable, Codable {
     /// The member expressions.
     ///
     /// For example, in `(foo, bar)`, `members` is `[foo, bar]`.
-    var members: [Expression]
+    var members: [SwiftExpression]
 }
 
 /// A Swift expression.
-indirect enum Expression: Equatable, Codable {
+indirect enum SwiftExpression: Equatable, Codable {
 
     /// A literal.
     ///
@@ -1031,7 +1031,7 @@ enum CodeBlockItem: Equatable, Codable {
     case declaration(Declaration)
 
     /// An expression, such as a call of a declared function.
-    case expression(Expression)
+    case expression(SwiftExpression)
 }
 
 /// A code block, with an optional comment.
@@ -1103,7 +1103,7 @@ extension Declaration {
         kind: BindingKind,
         left: String,
         type: ExistingTypeDescription? = nil,
-        right: Expression? = nil,
+        right: SwiftExpression? = nil,
         getter: [CodeBlock]? = nil,
         getterEffects: [FunctionKeyword] = [],
         setter: [CodeBlock]? = nil,
@@ -1144,9 +1144,9 @@ extension Declaration {
         accessModifier: AccessModifier? = nil,
         isStatic: Bool = false,
         kind: BindingKind,
-        left: Expression,
+        left: SwiftExpression,
         type: ExistingTypeDescription? = nil,
-        right: Expression? = nil,
+        right: SwiftExpression? = nil,
         getter: [CodeBlock]? = nil,
         getterEffects: [FunctionKeyword] = [],
         setter: [CodeBlock]? = nil,
@@ -1210,7 +1210,7 @@ extension Declaration {
         kind: FunctionKind,
         parameters: [ParameterDescription],
         keywords: [FunctionKeyword] = [],
-        returnType: Expression? = nil,
+        returnType: SwiftExpression? = nil,
         body: [CodeBlock]? = nil
     ) -> Self {
         .function(
@@ -1313,10 +1313,10 @@ extension CodeBlock {
     /// Returns a new expression code block wrapping the provided expression.
     /// - Parameter expression: The expression to wrap.
     /// - Returns: A new `CodeBlock` instance containing the provided declaration.
-    static func expression(_ expression: Expression) -> Self { CodeBlock(item: .expression(expression)) }
+    static func expression(_ expression: SwiftExpression) -> Self { CodeBlock(item: .expression(expression)) }
 }
 
-extension Expression {
+extension SwiftExpression {
 
     /// A string literal.
     ///
@@ -1336,13 +1336,13 @@ extension Expression {
     /// expression.
     /// - Parameter member: The name of the member to access on the expression.
     /// - Returns: A new expression representing member access.
-    func dot(_ member: String) -> Expression { .memberAccess(.init(left: self, right: member)) }
+    func dot(_ member: String) -> SwiftExpression { .memberAccess(.init(left: self, right: member)) }
 
     /// Returns a new expression that calls the current expression as a function
     /// with the specified arguments.
     /// - Parameter arguments: The arguments used to call the expression.
     /// - Returns: A new expression representing a function call.
-    func call(_ arguments: [FunctionArgumentDescription]) -> Expression {
+    func call(_ arguments: [FunctionArgumentDescription]) -> SwiftExpression {
         .functionCall(.init(calledExpression: self, arguments: arguments))
     }
 
@@ -1385,7 +1385,7 @@ extension Expression {
     ///    statement.
     ///   - cases: The cases defined in the switch statement.
     /// - Returns: A new expression representing a switch statement with the specified switched expression and cases
-    static func `switch`(switchedExpression: Expression, cases: [SwitchCaseDescription]) -> Self {
+    static func `switch`(switchedExpression: SwiftExpression, cases: [SwitchCaseDescription]) -> Self {
         .`switch`(.init(switchedExpression: switchedExpression, cases: cases))
     }
 
@@ -1409,7 +1409,7 @@ extension Expression {
     ///   - trailingClosure: A trailing closure.
     /// - Returns: A new expression representing a function call with the specified called expression and arguments.
     static func functionCall(
-        calledExpression: Expression,
+        calledExpression: SwiftExpression,
         arguments: [FunctionArgumentDescription] = [],
         trailingClosure: ClosureInvocationDescription? = nil
     ) -> Self {
@@ -1425,8 +1425,8 @@ extension Expression {
     ///   - trailingClosure: A trailing closure.
     /// - Returns: A new expression representing a function call with the specified called expression and arguments.
     static func functionCall(
-        calledExpression: Expression,
-        arguments: [Expression],
+        calledExpression: SwiftExpression,
+        arguments: [SwiftExpression],
         trailingClosure: ClosureInvocationDescription? = nil
     ) -> Self {
         .functionCall(
@@ -1443,7 +1443,7 @@ extension Expression {
     ///   - kind: The keyword to place before the expression.
     ///   - expression: The expression prefixed by the keyword.
     /// - Returns: A new expression with the specified keyword placed before the expression.
-    static func unaryKeyword(kind: KeywordKind, expression: Expression? = nil) -> Self {
+    static func unaryKeyword(kind: KeywordKind, expression: SwiftExpression? = nil) -> Self {
         .unaryKeyword(.init(kind: kind, expression: expression))
     }
 
@@ -1451,7 +1451,7 @@ extension Expression {
     /// an expression.
     /// - Parameter expression: The expression to prepend.
     /// - Returns: A new expression with the `return` keyword placed before the expression.
-    static func `return`(_ expression: Expression? = nil) -> Self {
+    static func `return`(_ expression: SwiftExpression? = nil) -> Self {
         .unaryKeyword(kind: .return, expression: expression)
     }
 
@@ -1459,13 +1459,13 @@ extension Expression {
     /// an expression.
     /// - Parameter expression: The expression to prepend.
     /// - Returns: A new expression with the `try` keyword placed before the expression.
-    static func `try`(_ expression: Expression) -> Self { .unaryKeyword(kind: .try, expression: expression) }
+    static func `try`(_ expression: SwiftExpression) -> Self { .unaryKeyword(kind: .try, expression: expression) }
 
     /// Returns a new expression that puts the try? keyword before
     /// an expression.
     /// - Parameter expression: The expression to prepend.
     /// - Returns: A new expression with the `try?` keyword placed before the expression.
-    static func optionalTry(_ expression: Expression) -> Self {
+    static func optionalTry(_ expression: SwiftExpression) -> Self {
         .unaryKeyword(kind: .try(hasPostfixQuestionMark: true), expression: expression)
     }
 
@@ -1473,13 +1473,13 @@ extension Expression {
     /// an expression.
     /// - Parameter expression: The expression to prepend.
     /// - Returns: A new expression with the `await` keyword placed before the expression.
-    static func `await`(_ expression: Expression) -> Self { .unaryKeyword(kind: .await, expression: expression) }
+    static func `await`(_ expression: SwiftExpression) -> Self { .unaryKeyword(kind: .await, expression: expression) }
 
     /// Returns a new expression that puts the yield keyword before
     /// an expression.
     /// - Parameter expression: The expression to prepend.
     /// - Returns: A new expression with the `yield` keyword placed before the expression.
-    static func `yield`(_ expression: Expression) -> Self { .unaryKeyword(kind: .yield, expression: expression) }
+    static func `yield`(_ expression: SwiftExpression) -> Self { .unaryKeyword(kind: .yield, expression: expression) }
 
     /// Returns a new expression that puts the provided code blocks into
     /// a do/catch block.
@@ -1521,7 +1521,7 @@ extension Expression {
     ///   - operation: The binary operator tying the two expressions together.
     ///   - right: The right-hand side expression of the operation.
     /// - Returns: A new expression representing the binary operation.
-    static func `binaryOperation`(left: Expression, operation: BinaryOperator, right: Expression) -> Self {
+    static func `binaryOperation`(left: SwiftExpression, operation: BinaryOperator, right: SwiftExpression) -> Self {
         .binaryOperation(.init(left: left, operation: operation, right: right))
     }
 
@@ -1531,7 +1531,7 @@ extension Expression {
     /// For example, `&foo` passes a reference to the `foo` variable.
     /// - Parameter referencedExpr: The referenced expression.
     /// - Returns: A new expression representing the inout expression.
-    static func inOut(_ referencedExpr: Expression) -> Self { .inOut(.init(referencedExpr: referencedExpr)) }
+    static func inOut(_ referencedExpr: SwiftExpression) -> Self { .inOut(.init(referencedExpr: referencedExpr)) }
 
     /// Creates a new assignment expression.
     ///
@@ -1540,7 +1540,7 @@ extension Expression {
     ///   - left: The left-hand side expression, the variable to assign to.
     ///   - right: The right-hand side expression, the value to assign.
     /// - Returns: Assignment expression.
-    static func assignment(left: Expression, right: Expression) -> Self { .assignment(.init(left: left, right: right)) }
+    static func assignment(left: SwiftExpression, right: SwiftExpression) -> Self { .assignment(.init(left: left, right: right)) }
 
     /// Returns a new optional chaining expression wrapping the current
     /// expression.
@@ -1554,7 +1554,7 @@ extension Expression {
     /// For example, in `(foo, bar)`, `members` is `[foo, bar]`.
     /// - Parameter expressions: The member expressions.
     /// - Returns: A tuple expression.
-    static func tuple(_ expressions: [Expression]) -> Self { .tuple(.init(members: expressions)) }
+    static func tuple(_ expressions: [SwiftExpression]) -> Self { .tuple(.init(members: expressions)) }
 }
 
 extension MemberAccessDescription {
@@ -1568,7 +1568,7 @@ extension MemberAccessDescription {
 }
 
 extension LiteralDescription: ExpressibleByStringLiteral, ExpressibleByNilLiteral, ExpressibleByArrayLiteral {
-    init(arrayLiteral elements: Expression...) { self = .array(elements) }
+    init(arrayLiteral elements: SwiftExpression...) { self = .array(elements) }
 
     init(stringLiteral value: String) { self = .string(value) }
 
@@ -1592,13 +1592,13 @@ extension VariableDescription {
     static func `let`(_ name: String) -> Self { Self.init(kind: .let, left: .identifierPattern(name)) }
 }
 
-extension Expression {
+extension SwiftExpression {
 
     /// Creates a new assignment description where the called expression is
     /// assigned the value of the specified expression.
     /// - Parameter rhs: The right-hand side of the assignment expression.
     /// - Returns: An assignment description representing the assignment.
-    func equals(_ rhs: Expression) -> AssignmentDescription { .init(left: self, right: rhs) }
+    func equals(_ rhs: SwiftExpression) -> AssignmentDescription { .init(left: self, right: rhs) }
 }
 
 extension FunctionSignatureDescription {
@@ -1618,7 +1618,7 @@ extension SwitchCaseKind {
     /// specified expression as the name.
     /// - Parameter expression: The expression for the switch case label.
     /// - Returns: A switch case kind with the specified expression as the label.
-    static func `case`(_ expression: Expression) -> Self { .case(expression, []) }
+    static func `case`(_ expression: SwiftExpression) -> Self { .case(expression, []) }
 }
 
 extension KeywordKind {

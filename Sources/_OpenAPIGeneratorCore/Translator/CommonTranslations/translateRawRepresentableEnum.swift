@@ -36,7 +36,7 @@ extension FileTranslator {
         cases: [(caseName: String, rawExpr: LiteralDescription)],
         unknownCaseName: String?,
         unknownCaseDescription: String?,
-        customSwitchedExpression: (Expression) -> Expression = { $0 }
+        customSwitchedExpression: (SwiftExpression) -> SwiftExpression = { $0 }
     ) throws -> Declaration {
 
         let generateUnknownCases = unknownCaseName != nil
@@ -55,7 +55,7 @@ extension FileTranslator {
                 let knownCases: [SwitchCaseDescription] = cases.map { caseName, rawValue in
                     .init(
                         kind: .case(.literal(rawValue)),
-                        body: [.expression(.assignment(Expression.identifierPattern("self").equals(.dot(caseName))))]
+                        body: [.expression(.assignment(SwiftExpression.identifierPattern("self").equals(.dot(caseName))))]
                     )
                 }
                 let unknownCase = SwitchCaseDescription(
@@ -63,7 +63,7 @@ extension FileTranslator {
                     body: [
                         .expression(
                             .assignment(
-                                Expression.identifierPattern("self")
+                                SwiftExpression.identifierPattern("self")
                                     .equals(
                                         .functionCall(
                                             calledExpression: .dot(unknownCaseName),
@@ -124,7 +124,7 @@ extension FileTranslator {
 
             let allCasesGetter: Declaration
             do {
-                let caseExpressions: [Expression] = cases.map { caseName, _ in .memberAccess(.init(right: caseName)) }
+                let caseExpressions: [SwiftExpression] = cases.map { caseName, _ in .memberAccess(.init(right: caseName)) }
                 allCasesGetter = .variable(
                     accessModifier: config.access,
                     isStatic: true,

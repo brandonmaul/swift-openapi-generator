@@ -20,7 +20,7 @@ extension ServerFileTranslator {
     /// - Parameter operation: The OpenAPI operation.
     /// - Returns: An expression representing the process of converting a request into an Input type.
     /// - Throws: An error if there's an issue while generating the expression for request conversion.
-    func translateServerDeserializer(_ operation: OperationDescription) throws -> Expression {
+    func translateServerDeserializer(_ operation: OperationDescription) throws -> SwiftExpression {
         var closureBody: [CodeBlock] = []
 
         let typedRequestBody = try typedRequestBody(in: operation)
@@ -83,7 +83,7 @@ extension ServerFileTranslator {
             inputMembers.append((bodyCodeBlocks, .init(label: "body", expression: .identifierPattern("body"))))
         }
 
-        let returnExpr: Expression = .return(.identifierType(inputTypeName).call(inputMembers.map(\.argument)))
+        let returnExpr: SwiftExpression = .return(.identifierType(inputTypeName).call(inputMembers.map(\.argument)))
 
         closureBody.append(contentsOf: inputMembers.flatMap(\.codeBlocks) + [.expression(returnExpr)])
         return .closureInvocation(argumentNames: ["request", "requestBody", "metadata"], body: closureBody)
@@ -95,12 +95,12 @@ extension ServerFileTranslator {
     /// - Returns: An expression for converting the Output type into a structured response.
     /// - Throws: An error if there's an issue generating the response conversion expression,
     ///           such as encountering unsupported response types or invalid definitions.
-    func translateServerSerializer(_ description: OperationDescription) throws -> Expression {
+    func translateServerSerializer(_ description: OperationDescription) throws -> SwiftExpression {
         var cases: [SwitchCaseDescription] = try description.responseOutcomes.map { outcome in
             try translateResponseOutcomeInServer(outcome: outcome, operation: description)
         }
         if !description.containsDefaultResponse {
-            let undocumentedExpr: Expression = .return(
+            let undocumentedExpr: SwiftExpression = .return(
                 .tuple([
                     .dot("init").call([.init(label: "soar_statusCode", expression: .identifierPattern("statusCode"))]),
                     .literal(nil),
@@ -113,7 +113,7 @@ extension ServerFileTranslator {
                 )
             )
         }
-        let switchStatusCodeExpr: Expression = .switch(switchedExpression: .identifierPattern("output"), cases: cases)
+        let switchStatusCodeExpr: SwiftExpression = .switch(switchedExpression: .identifierPattern("output"), cases: cases)
         return .closureInvocation(argumentNames: ["output", "request"], body: [.expression(switchStatusCodeExpr)])
     }
 
@@ -127,10 +127,10 @@ extension ServerFileTranslator {
     /// - Throws: An error if there's an issue while generating the method declaration or
     /// the router registration expression.
     func translateServerMethod(_ description: OperationDescription, serverUrlVariableName: String) throws -> (
-        registerCall: Expression, functionDecl: Declaration
+        registerCall: SwiftExpression, functionDecl: Declaration
     ) {
 
-        let operationTypeExpr = Expression.identifierType(.member(Constants.Operations.namespace))
+        let operationTypeExpr = SwiftExpression.identifierType(.member(Constants.Operations.namespace))
             .dot(description.methodName)
 
         let operationArg = FunctionArgumentDescription(label: "forOperation", expression: operationTypeExpr.dot("id"))
@@ -155,7 +155,7 @@ extension ServerFileTranslator {
             expression: try translateServerSerializer(description)
         )
 
-        let wrapperClosureExpr: Expression = .closureInvocation(body: [
+        let wrapperClosureExpr: SwiftExpression = .closureInvocation(body: [
             .expression(
                 .try(
                     .await(
@@ -169,7 +169,7 @@ extension ServerFileTranslator {
                 )
             )
         ])
-        let registerCall: Expression = .try(
+        let registerCall: SwiftExpression = .try(
             .identifierPattern("transport").dot("register")
                 .call([
                     .init(label: nil, expression: wrapperClosureExpr),
@@ -182,7 +182,7 @@ extension ServerFileTranslator {
                 ])
         )
 
-        let handleExpr: Expression = .try(
+        let handleExpr: SwiftExpression = .try(
             .await(
                 .identifierPattern("handle")
                     .call([

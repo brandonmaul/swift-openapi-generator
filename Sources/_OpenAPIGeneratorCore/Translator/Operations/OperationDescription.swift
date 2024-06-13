@@ -255,7 +255,7 @@ extension OperationDescription {
     /// with the parameter values.
     ///
     /// For example, `/cats/{}` and `[input.catId]`.
-    var templatedPathForClient: (String, Expression) {
+    var templatedPathForClient: (String, SwiftExpression) {
         get throws {
             let pathParameterNames = try Set(allResolvedParameters.filter { $0.location == .path }.map(\.name))
             var orderedPathParameters: [String] = []
@@ -294,10 +294,10 @@ extension OperationDescription {
                 newComponents.append(subcomponents.joined())
             }
             let newPath = OpenAPI.Path(newComponents, trailingSlash: path.trailingSlash)
-            let names: [Expression] = orderedPathParameters.map { param in
+            let names: [SwiftExpression] = orderedPathParameters.map { param in
                 .identifierPattern("input").dot("path").dot(asSwiftSafeName(param))
             }
-            let arrayExpr: Expression = .literal(.array(names))
+            let arrayExpr: SwiftExpression = .literal(.array(names))
             return (newPath.rawValue, arrayExpr)
         }
     }

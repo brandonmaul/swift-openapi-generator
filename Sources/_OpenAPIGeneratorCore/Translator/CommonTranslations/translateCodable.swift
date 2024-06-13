@@ -115,7 +115,7 @@ extension FileTranslator {
         -> Declaration
     {
         let containerVarDecl: Declaration = .decoderContainerOfKeysVar()
-        let assignExprs: [Expression] = properties.map { property in
+        let assignExprs: [SwiftExpression] = properties.map { property in
             let typeUsage = property.typeUsage
             return .assignment(
                 left: .identifierPattern(property.swiftSafeName),
@@ -152,7 +152,7 @@ extension FileTranslator {
             right: .identifierPattern("encoder").dot("container")
                 .call([.init(label: "keyedBy", expression: .identifierType(.member("CodingKeys")).dot("self"))])
         )
-        let encodeExprs: [Expression] = properties.map { property in
+        let encodeExprs: [SwiftExpression] = properties.map { property in
             .try(
                 .identifierPattern("container").dot("encode\(property.typeUsage.isOptional ? "IfPresent" : "")")
                     .call([
@@ -178,8 +178,8 @@ extension FileTranslator {
     func translateStructBlueprintAllOfDecoder(properties: [(property: PropertyBlueprint, isKeyValuePair: Bool)])
         -> Declaration
     {
-        let assignExprs: [Expression] = properties.map { property, isKeyValuePair in
-            let decoderExpr: Expression =
+        let assignExprs: [SwiftExpression] = properties.map { property, isKeyValuePair in
+            let decoderExpr: SwiftExpression =
                 isKeyValuePair ? .initFromDecoderExpr() : .decodeFromSingleValueContainerExpr()
             return .assignment(left: .identifierPattern(property.swiftSafeName), right: .try(decoderExpr))
         }
@@ -192,9 +192,9 @@ extension FileTranslator {
     func translateStructBlueprintAllOfEncoder(properties: [(property: PropertyBlueprint, isKeyValuePair: Bool)])
         -> Declaration
     {
-        let exprs: [Expression]
+        let exprs: [SwiftExpression]
         if let firstSingleValue = properties.first(where: { !$0.isKeyValuePair }) {
-            let expr: Expression = .identifierPattern(firstSingleValue.property.swiftSafeName)
+            let expr: SwiftExpression = .identifierPattern(firstSingleValue.property.swiftSafeName)
                 .encodeToSingleValueContainerExpr(gracefully: false)
             exprs = [expr]
         } else {
@@ -214,15 +214,15 @@ extension FileTranslator {
     {
         let errorArrayDecl: Declaration = .createErrorArrayDecl()
         let assignBlocks: [CodeBlock] = properties.map { (property, isKeyValuePair) in
-            let decoderExpr: Expression =
+            let decoderExpr: SwiftExpression =
                 isKeyValuePair ? .initFromDecoderExpr() : .decodeFromSingleValueContainerExpr()
-            let assignExpr: Expression = .assignment(
+            let assignExpr: SwiftExpression = .assignment(
                 left: .identifierPattern(property.swiftSafeName),
                 right: .try(decoderExpr)
             )
             return .expression(assignExpr.wrapInDoCatchAppendArrayExpr())
         }
-        let atLeastOneNotNilCheckExpr: Expression = .try(
+        let atLeastOneNotNilCheckExpr: SwiftExpression = .try(
             .identifierType(TypeName.decodingError).dot("verifyAtLeastOneSchemaIsNotNil")
                 .call([
                     .init(
@@ -245,7 +245,7 @@ extension FileTranslator {
         -> Declaration
     {
         let singleValueNames = properties.filter { !$0.isKeyValuePair }.map(\.property.swiftSafeName)
-        let encodeSingleValuesExpr: Expression? =
+        let encodeSingleValuesExpr: SwiftExpression? =
             singleValueNames.isEmpty
             ? nil
             : .try(
@@ -254,7 +254,7 @@ extension FileTranslator {
                         .init(label: nil, expression: .literal(.array(singleValueNames.map { .identifierPattern($0) })))
                     ])
             )
-        let encodeExprs: [Expression] =
+        let encodeExprs: [SwiftExpression] =
             (encodeSingleValuesExpr.flatMap { [$0] } ?? [])
             + properties.filter { $0.isKeyValuePair }.map(\.property)
             .map { property in .identifierPattern(property.swiftSafeName).optionallyChained().encodeExpr() }
@@ -268,8 +268,8 @@ extension FileTranslator {
     /// - Returns: A `Declaration` representing the `OneOf` decoder implementation.
     func translateOneOfWithoutDiscriminatorDecoder(cases: [(name: String, isKeyValuePair: Bool)]) -> Declaration {
         let errorArrayDecl: Declaration = .createErrorArrayDecl()
-        let assignExprs: [Expression] = cases.map { (caseName, isKeyValuePair) in
-            let decoderExpr: Expression =
+        let assignExprs: [SwiftExpression] = cases.map { (caseName, isKeyValuePair) in
+            let decoderExpr: SwiftExpression =
                 isKeyValuePair ? .initFromDecoderExpr() : .decodeFromSingleValueContainerExpr()
             let body: [CodeBlock] = [
                 .expression(
@@ -289,7 +289,7 @@ extension FileTranslator {
 
     /// Returns an expression that throws an error when a oneOf discriminator
     /// failed to match any known cases.
-    func translateOneOfDecoderThrowOnUnknownExpr(discriminatorSwiftName: String) -> Expression {
+    func translateOneOfDecoderThrowOnUnknownExpr(discriminatorSwiftName: String) -> SwiftExpression {
         .unaryKeyword(
             kind: .throw,
             expression: .identifierType(TypeName.decodingError).dot("unknownOneOfDiscriminator")
@@ -304,7 +304,7 @@ extension FileTranslator {
     }
     /// Returns an expression that throws an error when a oneOf failed
     /// to match any documented cases.
-    func translateOneOfDecoderThrowOnNoCaseDecodedExpr() -> Expression {
+    func translateOneOfDecoderThrowOnNoCaseDecodedExpr() -> SwiftExpression {
         .unaryKeyword(
             kind: .throw,
             expression: .identifierType(TypeName.decodingError).dot("failedToDecodeOneOfSchema")
@@ -370,10 +370,10 @@ extension FileTranslator {
     /// - Parameter cases: The case names to be encoded, including the special case for undocumented cases.
     /// - Returns: A `Declaration` representing the `OneOf` encoder implementation.
     func translateOneOfEncoder(cases: [(name: String, isKeyValuePair: Bool)]) -> Declaration {
-        let switchExpr: Expression = .switch(
+        let switchExpr: SwiftExpression = .switch(
             switchedExpression: .identifierPattern("self"),
             cases: cases.map { caseName, isKeyValuePair in
-                let makeEncodeExpr: (Expression, Bool) -> Expression = { expr, isKeyValuePair in
+                let makeEncodeExpr: (SwiftExpression, Bool) -> SwiftExpression = { expr, isKeyValuePair in
                     if isKeyValuePair {
                         return expr.encodeExpr()
                     } else {
@@ -392,13 +392,13 @@ extension FileTranslator {
 
 // MARK: - Utilities
 
-fileprivate extension Expression {
+fileprivate extension SwiftExpression {
     /// Returns a new expression that calls the encode method on the current
     /// expression.
     ///
     /// Assumes the existence of an "encoder" variable in the current scope.
     /// - Returns: An expression representing the encoding of the current value using the "encoder" variable.
-    func encodeExpr() -> Expression {
+    func encodeExpr() -> SwiftExpression {
         .try(self.dot("encode").call([.init(label: "to", expression: .identifierPattern("encoder"))]))
     }
 
@@ -409,7 +409,7 @@ fileprivate extension Expression {
     /// - Parameter gracefully: A Boolean value indicating whether the graceful
     ///   variant of the expression is used.
     /// - Returns: An Expression representing the result of encoding the current expression.
-    func encodeToSingleValueContainerExpr(gracefully: Bool) -> Expression {
+    func encodeToSingleValueContainerExpr(gracefully: Bool) -> SwiftExpression {
         .try(
             .identifierPattern("encoder").dot("encodeToSingleValueContainer\(gracefully ? "Gracefully" : "")")
                 .call([.init(label: nil, expression: self)])
@@ -422,7 +422,7 @@ fileprivate extension Expression {
     /// and assumes that the result is assigned to a variable with a defined
     /// type, as the type checking relies on type inference.
     /// - Returns: An expression representing the initialization of an instance using the decoder.
-    static func initFromDecoderExpr() -> Expression {
+    static func initFromDecoderExpr() -> SwiftExpression {
         .dot("init").call([.init(label: "from", expression: .identifierPattern("decoder"))])
     }
 
@@ -434,7 +434,7 @@ fileprivate extension Expression {
     /// type, as the type checking relies on type inference.
     /// - Returns: An Expression representing the result of calling the decoder initializer
     ///   for non-key-value pair values.
-    static func decodeFromSingleValueContainerExpr() -> Expression {
+    static func decodeFromSingleValueContainerExpr() -> SwiftExpression {
         .identifierPattern("decoder").dot("decodeFromSingleValueContainer").call([])
     }
     /// Returns a new expression that wraps the provided expression in
@@ -442,7 +442,7 @@ fileprivate extension Expression {
     ///
     /// Assumes the existence of an "errors" variable in the current scope.
     /// - Returns: The expression.
-    func wrapInDoCatchAppendArrayExpr() -> Expression { [CodeBlock.expression(self)].wrapInDoCatchAppendArrayExpr() }
+    func wrapInDoCatchAppendArrayExpr() -> SwiftExpression { [CodeBlock.expression(self)].wrapInDoCatchAppendArrayExpr() }
 }
 
 fileprivate extension Array where Element == CodeBlock {
@@ -451,7 +451,7 @@ fileprivate extension Array where Element == CodeBlock {
     ///
     /// Assumes the existence of an "errors" variable in the current scope.
     /// - Returns: The expression.
-    func wrapInDoCatchAppendArrayExpr() -> Expression {
+    func wrapInDoCatchAppendArrayExpr() -> SwiftExpression {
         .do(
             self,
             catchBody: [

@@ -142,7 +142,7 @@ extension ClientFileTranslator {
         requestVariableName: String,
         bodyVariableName: String,
         inputVariableName: String
-    ) throws -> Expression {
+    ) throws -> SwiftExpression {
         let contents = requestBody.contents
         var cases: [SwitchCaseDescription] = try contents.map { typedContent in
             let content = typedContent.content
@@ -156,7 +156,7 @@ extension ClientFileTranslator {
             } else {
                 extraBodyAssignArgs = []
             }
-            let bodyAssignExpr: Expression = .assignment(
+            let bodyAssignExpr: SwiftExpression = .assignment(
                 left: .identifierPattern(bodyVariableName),
                 right: .try(
                     .identifierPattern("converter")
@@ -246,7 +246,7 @@ extension ServerFileTranslator {
             let contentType = content.contentType
             let codingStrategy = contentType.codingStrategy
             let codingStrategyName = codingStrategy.runtimeName
-            let transformExpr: Expression = .closureInvocation(
+            let transformExpr: SwiftExpression = .closureInvocation(
                 argumentNames: ["value"],
                 body: [
                     .expression(
@@ -261,7 +261,7 @@ extension ServerFileTranslator {
             } else {
                 extraBodyAssignArgs = []
             }
-            let converterExpr: Expression = .identifierPattern("converter")
+            let converterExpr: SwiftExpression = .identifierPattern("converter")
                 .dot("get\(isOptional ? "Optional" : "Required")RequestBodyAs\(codingStrategyName)")
                 .call(
                     [
@@ -272,7 +272,7 @@ extension ServerFileTranslator {
                         .init(label: "transforming", expression: transformExpr),
                     ] + extraBodyAssignArgs
                 )
-            let bodyExpr: Expression
+            let bodyExpr: SwiftExpression
             switch codingStrategy {
             case .json, .uri, .urlEncodedForm:
                 // Buffering.
@@ -281,7 +281,7 @@ extension ServerFileTranslator {
                 // Streaming.
                 bodyExpr = .try(converterExpr)
             }
-            let bodyAssignExpr: Expression = .assignment(left: .identifierPattern("body"), right: bodyExpr)
+            let bodyAssignExpr: SwiftExpression = .assignment(left: .identifierPattern("body"), right: bodyExpr)
             return .init(
                 kind: .case(.literal(typedContent.content.contentType.headerValueForValidation)),
                 body: [.expression(bodyAssignExpr)]
@@ -289,7 +289,7 @@ extension ServerFileTranslator {
         }
 
         let cases = try typedContents.map(makeCase)
-        let switchExpr: Expression = .switch(
+        let switchExpr: SwiftExpression = .switch(
             switchedExpression: .identifierPattern("chosenContentType"),
             cases: cases + [
                 .init(

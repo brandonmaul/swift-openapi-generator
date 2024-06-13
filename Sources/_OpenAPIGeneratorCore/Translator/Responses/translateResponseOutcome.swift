@@ -158,12 +158,12 @@ extension ClientFileTranslator {
         let bodyTypeName = responseStructTypeName.appending(swiftComponent: Constants.Operation.Body.typeName)
 
         let headers = try typedResponseHeaders(from: typedResponse.response, inParent: headersTypeName)
-        let headersVarExpr: Expression?
+        let headersVarExpr: SwiftExpression?
         if !headers.isEmpty {
             let headerInitArgs: [FunctionArgumentDescription] = try headers.map { header in
                 try translateResponseHeaderInClient(header, responseVariableName: "response")
             }
-            let headersInitExpr: Expression = .dot("init").call(headerInitArgs)
+            let headersInitExpr: SwiftExpression = .dot("init").call(headerInitArgs)
             let headersVarDecl: Declaration = .variable(
                 kind: .let,
                 left: "headers",
@@ -181,7 +181,7 @@ extension ClientFileTranslator {
             isRequired: true,
             inParent: bodyTypeName
         )
-        let bodyVarExpr: Expression?
+        let bodyVarExpr: SwiftExpression?
         if !typedContents.isEmpty {
 
             let contentTypeDecl: Declaration = .variable(
@@ -216,7 +216,7 @@ extension ClientFileTranslator {
 
             func makeCase(typedContent: TypedSchemaContent) throws -> SwitchCaseDescription {
                 let contentTypeUsage = typedContent.resolvedTypeUsage
-                let transformExpr: Expression = .closureInvocation(
+                let transformExpr: SwiftExpression = .closureInvocation(
                     argumentNames: ["value"],
                     body: [
                         .expression(
@@ -233,7 +233,7 @@ extension ClientFileTranslator {
                     extraBodyAssignArgs = []
                 }
 
-                let converterExpr: Expression = .identifierPattern("converter")
+                let converterExpr: SwiftExpression = .identifierPattern("converter")
                     .dot("getResponseBodyAs\(codingStrategy.runtimeName)")
                     .call(
                         [
@@ -242,7 +242,7 @@ extension ClientFileTranslator {
                             .init(label: "transforming", expression: transformExpr),
                         ] + extraBodyAssignArgs
                     )
-                let bodyExpr: Expression
+                let bodyExpr: SwiftExpression
                 switch codingStrategy {
                 case .json, .uri, .urlEncodedForm:
                     // Buffering.
@@ -251,14 +251,14 @@ extension ClientFileTranslator {
                     // Streaming.
                     bodyExpr = .try(converterExpr)
                 }
-                let bodyAssignExpr: Expression = .assignment(left: .identifierPattern("body"), right: bodyExpr)
+                let bodyAssignExpr: SwiftExpression = .assignment(left: .identifierPattern("body"), right: bodyExpr)
                 return .init(
                     kind: .case(.literal(typedContent.content.contentType.headerValueForValidation)),
                     body: [.expression(bodyAssignExpr)]
                 )
             }
             let cases = try typedContents.map(makeCase)
-            let switchExpr: Expression = .switch(
+            let switchExpr: SwiftExpression = .switch(
                 switchedExpression: .identifierPattern("chosenContentType"),
                 cases: cases + [
                     .init(
@@ -283,7 +283,7 @@ extension ClientFileTranslator {
             bodyVarExpr = nil
         }
 
-        let initExpr: Expression = .dot("init")
+        let initExpr: SwiftExpression = .dot("init")
             .call(
                 [
                     headersVarExpr.map { headersVarExpr in
@@ -308,7 +308,7 @@ extension ClientFileTranslator {
             optionalStatusCode = []
         }
 
-        let returnExpr: Expression = .return(
+        let returnExpr: SwiftExpression = .return(
             .dot(responseKind.identifier).call(optionalStatusCode + [.init(label: nil, expression: initExpr)])
         )
 
@@ -339,7 +339,7 @@ extension ServerFileTranslator {
 
         var codeBlocks: [CodeBlock] = []
 
-        let statusCodeExpr: Expression
+        let statusCodeExpr: SwiftExpression
         if let code = responseKind.code {
             statusCodeExpr = .literal(code)
         } else {
@@ -362,12 +362,12 @@ extension ServerFileTranslator {
         )
 
         let headers = try typedResponseHeaders(from: typedResponse.response, inParent: headersTypeName)
-        let headerExprs: [Expression] = try headers.map { header in
+        let headerExprs: [SwiftExpression] = try headers.map { header in
             try translateResponseHeaderInServer(header, responseVariableName: "response")
         }
         codeBlocks.append(contentsOf: headerExprs.map { .expression($0) })
 
-        let bodyReturnExpr: Expression
+        let bodyReturnExpr: SwiftExpression
         let typedContents = try supportedTypedContents(
             typedResponse.response.content,
             isRequired: true,
@@ -380,7 +380,7 @@ extension ServerFileTranslator {
                 var caseCodeBlocks: [CodeBlock] = []
 
                 let contentTypeHeaderValue = typedContent.content.contentType.headerValueForValidation
-                let validateAcceptHeader: Expression = .try(
+                let validateAcceptHeader: SwiftExpression = .try(
                     .identifierPattern("converter").dot("validateAcceptIfPresent")
                         .call([
                             .init(label: nil, expression: .literal(contentTypeHeaderValue)),
@@ -396,7 +396,7 @@ extension ServerFileTranslator {
                 } else {
                     extraBodyAssignArgs = []
                 }
-                let assignBodyExpr: Expression = .assignment(
+                let assignBodyExpr: SwiftExpression = .assignment(
                     left: .identifierPattern("body"),
                     right: .try(
                         .identifierPattern("converter")
@@ -435,7 +435,7 @@ extension ServerFileTranslator {
             bodyReturnExpr = .literal(nil)
         }
 
-        let returnExpr: Expression = .return(.tuple([.identifierPattern("response"), bodyReturnExpr]))
+        let returnExpr: SwiftExpression = .return(.tuple([.identifierPattern("response"), bodyReturnExpr]))
         codeBlocks.append(.expression(returnExpr))
 
         let caseKind: SwitchCaseKind
