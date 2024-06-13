@@ -1208,7 +1208,7 @@ final class SnippetBasedReferenceTests: XCTestCase {
             """,
             """
             public enum Schemas {
-                @frozen public enum MyEnum: String, Codable, Hashable, Sendable {
+                @frozen public enum MyEnum: String, Codable, Hashable, Sendable, CaseIterable {
                     case one = "one"
                     case _empty = ""
                     case _dollar_tart = "$tart"
@@ -1232,7 +1232,7 @@ final class SnippetBasedReferenceTests: XCTestCase {
             """,
             """
             public enum Schemas {
-                @frozen public enum MyEnum: Int, Codable, Hashable, Sendable {
+                @frozen public enum MyEnum: Int, Codable, Hashable, Sendable, CaseIterable {
                     case _0 = 0
                     case _10 = 10
                     case _20 = 20
@@ -1257,7 +1257,7 @@ final class SnippetBasedReferenceTests: XCTestCase {
             """
             public enum Schemas {
                 public struct MyOpenEnum: Codable, Hashable, Sendable {
-                    @frozen public enum Value1Payload: String, Codable, Hashable, Sendable {
+                    @frozen public enum Value1Payload: String, Codable, Hashable, Sendable, CaseIterable {
                         case one = "one"
                         case two = "two"
                     }
@@ -1972,7 +1972,7 @@ final class SnippetBasedReferenceTests: XCTestCase {
             public enum Responses {
                 public struct BadRequest: Sendable, Hashable {
                     public struct Headers: Sendable, Hashable {
-                        @frozen public enum X_hyphen_ReasonPayload: String, Codable, Hashable, Sendable {
+                        @frozen public enum X_hyphen_ReasonPayload: String, Codable, Hashable, Sendable, CaseIterable {
                             case badLuck = "badLuck"
                         }
                         public var X_hyphen_Reason: Components.Responses.BadRequest.Headers.X_hyphen_ReasonPayload?
@@ -2162,7 +2162,7 @@ final class SnippetBasedReferenceTests: XCTestCase {
                     @frozen public enum multipartFormPayload: Sendable, Hashable {
                         public struct logPayload: Sendable, Hashable {
                             public struct Headers: Sendable, Hashable {
-                                @frozen public enum x_hyphen_log_hyphen_typePayload: String, Codable, Hashable, Sendable {
+                                @frozen public enum x_hyphen_log_hyphen_typePayload: String, Codable, Hashable, Sendable, CaseIterable {
                                     case structured = "structured"
                                     case unstructured = "unstructured"
                                 }
